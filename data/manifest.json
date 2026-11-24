@@ -1,0 +1,117 @@
+{
+  "format": 2,
+  "model": "gpt2",
+  "prompt": "I am an AI and I",
+  "prompt_len": 6,
+  "output": " am not a scientist. I am a human being. I am a human being.",
+  "params": 124439808,
+  "n_layers": 12,
+  "n_heads": 12,
+  "d_model": 768,
+  "d_mlp": 3072,
+  "vocab": 50257,
+  "steps": [
+    {
+      "file": "step_00.json",
+      "input": "I am an AI and I",
+      "chosen": " am",
+      "p": 0.2296
+    },
+    {
+      "file": "step_01.json",
+      "input": "I am an AI and I am",
+      "chosen": " not",
+      "p": 0.1085
+    },
+    {
+      "file": "step_02.json",
+      "input": "I am an AI and I am not",
+      "chosen": " a",
+      "p": 0.173
+    },
+    {
+      "file": "step_03.json",
+      "input": "I am an AI and I am not a",
+      "chosen": " scientist",
+      "p": 0.0875
+    },
+    {
+      "file": "step_04.json",
+      "input": "I am an AI and I am not a scientist",
+      "chosen": ".",
+      "p": 0.4908
+    },
+    {
+      "file": "step_05.json",
+      "input": "I am an AI and I am not a scientist.",
+      "chosen": " I",
+      "p": 0.3646
+    },
+    {
+      "file": "step_06.json",
+      "input": "I am an AI and I am not a scientist. I",
+      "chosen": " am",
+      "p": 0.4469
+    },
+    {
+      "file": "step_07.json",
+      "input": "I am an AI and I am not a scientist. I am",
+      "chosen": " a",
+      "p": 0.2374
+    },
+    {
+      "file": "step_08.json",
+      "input": "I am an AI and I am not a scientist. I am a",
+      "chosen": " human",
+      "p": 0.0567
+    },
+    {
+      "file": "step_09.json",
+      "input": "I am an AI and I am not a scientist. I am a human",
+      "chosen": " being",
+      "p": 0.3156
+    },
+    {
+      "file": "step_10.json",
+      "input": "I am an AI and I am not a scientist. I am a human being",
+      "chosen": ".",
+      "p": 0.3149
+    },
+    {
+      "file": "step_11.json",
+      "input": "I am an AI and I am not a scientist. I am a human being.",
+      "chosen": " I",
+      "p": 0.3544
+    },
+    {
+      "file": "step_12.json",
+      "input": "I am an AI and I am not a scientist. I am a human being. I",
+      "chosen": " am",
+      "p": 0.5134
+    },
+    {
+      "file": "step_13.json",
+      "input": "I am an AI and I am not a scientist. I am a human being. I am",
+      "chosen": " a",
+      "p": 0.2431
+    },
+    {
+      "file": "step_14.json",
+      "input": "I am an AI and I am not a scientist. I am a human being. I am a",
+      "chosen": " human",
+      "p": 0.1101
+    },
+    {
+      "file": "step_15.json",
+      "input": "I am an AI and I am not a scientist. I am a human being. I am a human",
+      "chosen": " being",
+      "p": 0.7156
+    },
+    {
+      "file": "step_16.json",
+      "input": "I am an AI and I am not a scientist. I am a human being. I am a human being",
+      "chosen": ".",
+      "p": 0.3635
+    }
+  ]
+}

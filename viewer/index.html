@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hello, human — dans la tête de GPT-2</title>
+<meta name="description" content="Une IA a écrit qu'elle était humaine. Voici, en 3D, ce qui s'est passé dans GPT-2 pendant qu'il écrivait : données réelles, couche par couche.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='9' fill='%23ff4f9a'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script type="importmap">
+{ "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<canvas id="c" aria-label="Visualisation 3D de GPT-2 en train d'écrire"></canvas>
+<div id="labels"></div>
+<div id="tip" hidden></div>
+
+<div class="topbar" id="topbar">
+  <header class="banner">
+    <p class="kicker" id="kicker">GPT-2 écrit un token à la fois</p>
+    <p id="seq" class="seq"></p>
+  </header>
+  <nav id="strip" class="strip" aria-label="Les couches du réseau : cliquer pour plonger"></nav>
+</div>
+
+<div class="bottombar" id="bottombar">
+  <section id="status" class="card status" aria-live="polite">
+    <p class="kicker" id="where"></p>
+    <h2 id="phase"></h2>
+    <p id="explain"></p>
+    <div id="final"></div>
+    <p class="hint" id="hint">Clique sur une sphère ou une case pour plonger dans une couche · Espace : pause</p>
+  </section>
+  <div id="ctrl" class="card ctrl">
+    <div class="row">
+      <button type="button" id="prev" title="Étape précédente (←)" aria-label="Étape précédente">◀</button>
+      <button type="button" id="play" class="main" title="Lecture / pause (Espace)">Pause</button>
+      <button type="button" id="next" title="Étape suivante (→)" aria-label="Étape suivante">▶</button>
+      <select id="speed" title="Vitesse" aria-label="Vitesse">
+        <option value="0.5">× 0,5</option><option value="1" selected>× 1</option><option value="2">× 2</option><option value="4">× 4</option>
+      </select>
+    </div>
+    <input id="time" type="range" min="0" max="1" step="0.01" value="0" aria-label="Position dans la séquence">
+    <div class="row">
+      <button type="button" id="home" title="Revenir à la vue d'ensemble">Vue d'ensemble</button>
+      <button type="button" id="glow" title="Couper la lueur si l'animation saccade">Lueur : oui</button>
+      <button type="button" id="help" title="Légende" aria-label="Légende">?</button>
+    </div>
+  </div>
+</div>
+
+<aside id="dive" class="card dive" hidden aria-live="polite"></aside>
+
+<section id="legend" class="card legend">
+  <h2>Ce que tu regardes</h2>
+  <ul>
+    <li><b class="k-sphere">Les sphères</b> : les 12 couches de GPT-2. Chaque point est l'un des 3 072 neurones de la couche ; sa lumière est son activation réelle.</li>
+    <li><b class="k-gold">La colonne dorée</b> : le mot en cours, qui traverse le réseau. Elle s'épaissit avec la taille réelle de son vecteur.</li>
+    <li><b class="k-memo">Les fils fins autour</b> : les mots déjà écrits, gardés en mémoire.</li>
+    <li><b class="k-cyan">Les filaments bleus</b> : l'attention. Ce que le mot en cours va chercher chez les autres, juste avant chaque sphère.</li>
+    <li><b>Au-dessus des sphères</b> : ce que le modèle prédirait s'il s'arrêtait là.</li>
+    <li><b class="k-pink">La traînée rose</b> : le mot choisi repart à l'entrée. C'est la boucle.</li>
+  </ul>
+  <p class="meta" id="meta"></p>
+  <p class="meta credit">Conçu et dirigé par anotherj4ck, code écrit avec Claude (Anthropic) · <a href="https://github.com/anotherj4ck/hello-human">code source</a></p>
+  <div class="legendbtns"><button type="button" id="legendClose">Compris</button><button type="button" id="replay">Revoir l'intro</button></div>
+</section>
+
+<div class="msg" id="msg" hidden></div>
+
+<script>
+  // Ouverte par double-clic (file://), la page ne peut charger ni ses modules ni ses données.
+  if (location.protocol === 'file:') {
+    const m = document.getElementById('msg');
+    m.textContent = "Cette page doit être servie par un serveur web. En local, depuis le dossier du projet : « python -m http.server 8000 --bind 127.0.0.1 », puis http://localhost:8000/viewer/ (voir le README).";
+    m.hidden = false;
+  }
+</script>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

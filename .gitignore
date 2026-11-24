@@ -1,4 +1,8 @@
-﻿.venv/
-data/
+# Environnement Python : propre à chaque machine, recréable avec « pip install -r requirements.txt »
+.venv/
 __pycache__/
+
+# Cache du modèle Hugging Face, s'il est déplacé dans le projet
 .hf-cache/
+
+# Le dossier data/ est volontairement publié : c'est l'enregistrement que le site rejoue en ligne.
