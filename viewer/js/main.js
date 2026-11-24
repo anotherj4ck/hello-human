@@ -40,7 +40,11 @@ $('meta').textContent = `${manifest.model} · ${(manifest.params / 1e6).toFixed(
 // ------------------------------------------------------------------
 // 2. Chronologie : une étape = le signal traverse les couches, puis le choix et la boucle
 // ------------------------------------------------------------------
-const WAVE = 8.4, HOLD = 2.8, D = WAVE + HOLD, END = N * D - 0.001;
+// Durées d'une étape à la vitesse « × 1 », en secondes : la traversée des couches (WAVE), puis le choix et la boucle (HOLD)
+const WAVE = 16.8, HOLD = 5.6, D = WAVE + HOLD, END = N * D - 0.001;
+// La boucle rose garde la même part de la phase HOLD, quelle que soit sa durée :
+// elle démarre après 5/28 de HOLD et dure 19/28 de HOLD (0,5 s puis 1,9 s quand HOLD valait 2,8 s).
+const LOOP_START = HOLD * 5 / 28, LOOP_LEN = HOLD * 19 / 28;
 const W0 = -1.6, W1 = L + 0.6;
 let T = 0, playing = true, speed = 1, cur = -1, dive = null, dragging = false, wasFollowing = true, intro = null;
 
@@ -53,7 +57,7 @@ function state() {
   else if (w < -0.5) phase = 'entree';
   else if (w > L - 0.5) phase = 'sortie';
   else { phase = 'couche'; lw = clamp(Math.round(w), 0, L - 1); sub = w < lw - 0.1 ? 'attention' : 'mlp'; }
-  const loop = local >= WAVE + 0.5 ? Math.min(1, (local - WAVE - 0.5) / 1.9) : -1;
+  const loop = local >= WAVE + LOOP_START ? Math.min(1, (local - WAVE - LOOP_START) / LOOP_LEN) : -1;
   return { k, local, w, phase, lw, sub, loop };
 }
 
@@ -80,9 +84,13 @@ function renderSeq(st) {
   if (key === seqKey) return; seqKey = key;
   const a = A.step(st.k), P = manifest.prompt_len;
   $('kicker').textContent = `GPT-2 écrit un token à la fois · étape ${st.k + 1} sur ${N}`;
-  $('seq').innerHTML = a.tokens.map((t, i) =>
-    `<span class="${i < P ? 'p' : 'g'}${i === a.n ? ' cur' : ''}">${esc(clean(t))}</span>`).join('')
-    + (choix ? `<span class="new">${esc(clean(a.chosen))}</span>` : '');
+  // Deux parties toujours étiquetées : le texte écrit par l'humain, puis la suite écrite par GPT-2.
+  // L'espace initial du premier token de GPT-2 est retiré : l'étiquette fait déjà la séparation.
+  const tok = (t, i) => `<span class="${i < P ? 'p' : 'g'}${i === a.n ? ' cur' : ''}">${esc(i === P ? clean(t).trimStart() : clean(t))}</span>`;
+  const gen = a.tokens.slice(P).map((t, j) => tok(t, P + j));
+  if (choix) gen.push(`<span class="new">${esc(gen.length ? clean(a.chosen) : clean(a.chosen).trimStart())}</span>`);
+  $('seq').innerHTML = `<span class="part"><span class="who h">Humain</span>${a.tokens.slice(0, P).map(tok).join('')}</span>`
+    + (gen.length ? `<span class="part"><span class="who ai">GPT-2</span>${gen.join('')}</span>` : '');
 }
 
 function buildStrip(k) {
@@ -325,6 +333,12 @@ $('legendClose').addEventListener('click', () => { $('legend').hidden = true; })
 const range = $('time');
 range.max = END;
 range.addEventListener('input', () => { T = +range.value; });
+// Partie déjà jouée de la piste, en rose : le CSS la dessine à partir de --p (0 à 1)
+let rangeFill = -1;
+function setRangeFill() {
+  const p = Math.round(T / END * 1000) / 1000;
+  if (p !== rangeFill) { rangeFill = p; range.style.setProperty('--p', p); }
+}
 range.addEventListener('pointerdown', () => dragging = true);
 addEventListener('pointerup', () => dragging = false);
 addEventListener('keydown', e => {
@@ -406,6 +420,7 @@ function loop(now) {
   renderSeq(st);
   if (!dive) { renderStrip(st); renderStatus(st); }
   if (!dragging) range.value = T;
+  setRangeFill();
   if ((layoutTimer += dt) > 0.5) { layoutTimer = 0; updateOffsets(); }   // la hauteur des panneaux varie avec le texte
   updateHover();
   S.frame(dt);

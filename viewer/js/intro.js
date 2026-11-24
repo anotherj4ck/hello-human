@@ -23,6 +23,9 @@ function TEXTES(m, first, N, ratio) {
   return {
     traduction: humain ? 'Je suis une IA et je… ne suis pas un scientifique. Je suis un être humain. Je suis un être humain.' : '',
     accroche: [humain ? 'Une IA vient d’écrire qu’elle est humaine.' : 'Une IA vient d’écrire cette phrase.', 'Voici ce qui s’est passé dans sa tête.'],
+    pourquoi: humain ? 'GPT-2 n’est pas un assistant : il prolonge le texte le plus probable. Et sur internet, « I am a human being » est presque toujours écrit par des humains.' : '',
+    qui: ['L’humain a écrit :', 'GPT-2 a continué :'],   // au-dessus des deux lignes de l'accroche
+    etiquettes: ['Humain', 'GPT-2'],                       // devant les deux parties de la phrase, pendant le montage
     tokens: [`Une IA ne lit pas des mots.`, `Elle découpe le texte en morceaux, les tokens. Chacun reçoit un numéro, puis devient une liste de ${m.d_model} nombres.`],
     traversee: [`Ces nombres traversent ${m.n_layers} couches de neurones artificiels.`, `${params} millions de réglages en tout${m.model === 'gpt2' ? ', appris en lisant 8 millions de pages web' : ''}.`],
     devine: [`Elle ne « répond » pas : elle devine.`, `Elle calcule la probabilité de chaque mot possible et en choisit un. Ici, « ${word(first.chosen)} », à ${pct(first.next[0].p, 0)}.`],
@@ -39,7 +42,8 @@ export function createIntro({ S, A, raw, manifest, onDone }) {
   const L = manifest.n_layers, N = raw.length, first = raw[0];
   const ratio = { gpt3: Math.round(GPT3 / manifest.params), kimi: Math.round(KIMI_K3 / manifest.params / 100) * 100 };
   const TX = TEXTES(manifest, first, N, ratio);
-  const prompt = manifest.prompt, gen = manifest.output;
+  const prompt = manifest.prompt;
+  const gen = manifest.output.trimStart();   // sur sa propre ligne, la réponse n'a pas besoin de son espace initial
 
   // ------------------------------------------------------------------
   // Calque HTML de l'intro
@@ -49,9 +53,12 @@ export function createIntro({ S, A, raw, manifest, onDone }) {
   root.innerHTML = `
     <div class="veil"></div>
     <div class="hook">
-      <p class="type"><span class="tp"></span><span class="tg"></span><span class="caret"></span></p>
+      <div class="type">
+        <p class="line"><span class="who h"></span><span class="tp"></span><span class="caret"></span></p>
+        <p class="line gl"><span class="who ai"></span><span class="tg"></span></p>
+      </div>
       <p class="trans"></p>
-      <p class="l1"></p><p class="l2"></p>
+      <p class="l1"></p><p class="why"></p><p class="l2"></p>
     </div>
     <p class="sentence"></p>
     <p class="counter"></p>
@@ -68,7 +75,17 @@ export function createIntro({ S, A, raw, manifest, onDone }) {
   const show = (sel, on) => $(sel).classList.toggle('on', on);
   $('.trans').textContent = TX.traduction;
   $('.l1').textContent = TX.accroche[0];
+  $('.why').textContent = TX.pourquoi;
   $('.l2').textContent = TX.accroche[1];
+  $('.who.h').textContent = TX.qui[0];
+  $('.who.ai').textContent = TX.qui[1];
+
+  // La phrase du montage : le texte de l'humain, puis la suite écrite par GPT-2, chacun avec son étiquette
+  function sentenceHTML(human, ai, chosen) {
+    if (ai) ai = ai.trimStart(); else chosen = chosen.trimStart();   // l'étiquette fait déjà la séparation
+    return `<span class="part"><span class="who h">${esc(TX.etiquettes[0])}</span><span>${esc(human)}</span></span>`
+      + `<span class="part"><span class="who ai">${esc(TX.etiquettes[1])}</span>${esc(ai)}<em>${esc(chosen)}</em></span>`;
+  }
 
   // ------------------------------------------------------------------
   // État de départ de la scène 3D : tout est éteint, caméra à l'entrée
@@ -94,14 +111,19 @@ export function createIntro({ S, A, raw, manifest, onDone }) {
 
   const SCENES = [
     { // 1. L'accroche
-      button: 'Entrer', end: typing.done + 2.4,
+      button: 'Entrer', end: typing.done + (TX.pourquoi ? 3.9 : 2.4),
       enter() { root.classList.add('black'); show('.hook', true); },
       update(t) {
         $('.tp').textContent = prompt.slice(0, Math.floor(clamp01((t - typing.p0) / (prompt.length * typing.cp)) * prompt.length));
         $('.tg').textContent = gen.slice(0, Math.floor(clamp01((t - typing.g0) / (gen.length * typing.cg)) * gen.length));
+        // La ligne de GPT-2 apparaît quand il commence à écrire ; le curseur passe alors sur sa ligne
+        const ai = t >= typing.g0 - 0.3, line = $(ai ? '.gl' : '.line');
+        show('.gl', ai);
+        if ($('.caret').parentNode !== line) line.appendChild($('.caret'));
         show('.trans', t > typing.done + 0.5 && !!TX.traduction);
         show('.l1', t > typing.done + 1.3);
-        show('.l2', t > typing.done + 2.1);
+        show('.why', t > typing.done + 2.2 && !!TX.pourquoi);       // même règle que la traduction
+        show('.l2', t > typing.done + (TX.pourquoi ? 3.6 : 2.1));
       },
     },
     { // 2. Des mots aux nombres
@@ -161,7 +183,7 @@ export function createIntro({ S, A, raw, manifest, onDone }) {
           const p = (t - 3.3) / 2.2;
           S.setLoop(p); S.setFollowX(S.orbX(p));
           setCaption(TX.boucle);
-          $('.sentence').innerHTML = `<span>${esc(prompt)}</span><em>${esc(first.chosen)}</em>`;
+          $('.sentence').innerHTML = sentenceHTML(prompt, '', first.chosen);
           show('.sentence', true);
           return;
         }
@@ -172,7 +194,7 @@ export function createIntro({ S, A, raw, manifest, onDone }) {
           montage.k = k;
           S.setStep(raw[k], A.step(k), A);
           const toks = raw[k].tokens, P = manifest.prompt_len ?? first.tokens.length;
-          $('.sentence').innerHTML = `<span>${esc(toks.slice(0, P).join(''))}</span>${esc(toks.slice(P).join(''))}<em>${esc(raw[k].chosen)}</em>`;
+          $('.sentence').innerHTML = sentenceHTML(toks.slice(0, P).join(''), toks.slice(P).join(''), raw[k].chosen);
         }
         const local = t < 6.4 ? 0 : ((t - 6.4) % 0.6) / 0.55;
         S.setWave(t >= 6.4 + (N - 1) * 0.6 ? L + 0.6 : -1.6 + (L + 2.2) * Math.min(1, local));
